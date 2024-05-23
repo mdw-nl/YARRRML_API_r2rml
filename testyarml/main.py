@@ -37,7 +37,13 @@ async def process_yaml_data(file: UploadFile = File(...)):
 
 
 @app.post("/upload-file/")
-async def upload_file(string_input: str = Form(...), file_input: UploadFile = File(...)):
+async def upload_file(file_input: UploadFile = File(...)):
+    """
+
+
+    :param file_input: csv file with the data to be converted
+    :return:
+    """
     logging.info(f"Working on {file_input.filename}")
     if file_input.filename.endswith('.csv'):
         logging.info(f"Data saved in folder {file_input.filename}")
@@ -50,40 +56,32 @@ async def upload_file(string_input: str = Form(...), file_input: UploadFile = Fi
         os.makedirs(os.path.dirname(PATH_DATA), exist_ok=True)
         os.makedirs(os.path.dirname(PATH_TRANSFER), exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         file_path = f"{PATH_DATA}{file_input.filename}"
         logging.info(f"Data saved in folder {file_path}")
         df.to_csv(file_path)
-        config = f"""
-                                [CONFIGURATION]
-                                udfs: {PATH_PROCESSING_F}
-                                [GTFS_CSV]
-                                mappings:{PATH_MAPPING}{string_input}
-                             """
-        kg = kglab.KnowledgeGraph(
-        )
-        kg.materialize(config)
-        save_loc = f"{PATH_TRANSFER}output.ttl"
-        kg.save_rdf(save_loc)
-        logging.info(f"Save in location {save_loc}")
-        return FileResponse(save_loc, filename="output.ttl", media_type='text/turtle')
+        return {"Saved": True}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only .csv is accepted.")
 
 
-#@app.get("/generate-rdf/")
-#async def generate_rdf(file_name: str = Form()):
-#    os.makedirs(os.path.dirname(PATH_TRANSFER), exist_ok=True)
-#    config = f"""
-#                                    [CONFIGURATION]
-#                                    udfs: {PATH_PROCESSING_F}
-#                                    [GTFS_CSV]
-#                                    mappings:{PATH_MAPPING}{file_name}
-#                                 """
-#    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-#    kg = kglab.KnowledgeGraph(
-#    )
-#    kg.materialize(config)
-#    save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
-#    logging.info(f"Save in location {save_loc}")
-#    kg.save_rdf(save_loc)
-#
-#
+@app.post("/conversion/")
+async def generate_rdf(string_input: str = Form(...)):
+    """
+
+    :param string_input: name of the yaml file to be used for the r2rml generation.
+    :return:
+    """
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    config = f"""
+                                    [CONFIGURATION]
+                                    udfs: {PATH_PROCESSING_F}
+                                    [GTFS_CSV]
+                                    mappings:{PATH_MAPPING}{string_input}
+                                 """
+    kg = kglab.KnowledgeGraph(
+    )
+    kg.materialize(config)
+    save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
+    kg.save_rdf(save_loc)
+    logging.info(f"Saved in temp location {save_loc}")
+    return FileResponse(save_loc, filename="output.ttl", media_type='text/turtle')
