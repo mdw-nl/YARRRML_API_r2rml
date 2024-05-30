@@ -8,10 +8,18 @@ import os
 import pandas as pd
 from io import StringIO
 import logging
+from src.work.json_process import FlexibleData
+from fastapi import FastAPI
+import json
 
 app = FastAPI()
 
 logging.basicConfig(filename='example.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
+
+
+@app.post("/process/")
+async def receive_flexible_json(data: FlexibleData):
+    return {"message": "Data received successfully", "data": data}
 
 
 @app.post("/process-yaml/")
