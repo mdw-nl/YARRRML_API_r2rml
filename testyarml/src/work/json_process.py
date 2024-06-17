@@ -29,6 +29,7 @@ class mappingItemMappingSource(BaseModel):
 
 
 class mappingItemMappingTarget(BaseModel):
+    primary_sub:bool
     type: str
     uri: str
     name: str
@@ -50,5 +51,4 @@ def generate_yaml():
     name: str
     s: str
     typeSub: str
-    o:str
-
+    o: str
