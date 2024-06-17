@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  graph-db:
+    image: ghcr.io/maastrichtu-cds/fair_tools_docker-graphdb/docker-graphdb:latest
+    container_name: graphdb
+    ports:
+      - "7200:7200"
+    restart: unless-stopped
+
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - graph-db
