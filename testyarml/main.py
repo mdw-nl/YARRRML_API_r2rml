@@ -1,16 +1,14 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import FileResponse
-import yaml
-import kglab
+import subprocess
 from src.config.constant import *
+from src.config.Initialization import initialization_folders, save_yaml_in_dir, save_tabular_in_folder,\
+    generate_graph,generate_config
 from datetime import datetime
-import os
-import pandas as pd
-from io import StringIO
+
 import logging
 from src.work.json_process import FlexibleData
 from fastapi import FastAPI
-import json
 from src.work.utils import upload_graph_db
 
 app = FastAPI()
@@ -23,79 +21,29 @@ async def receive_flexible_json(data: FlexibleData):
     return {"message": "Data received successfully", "data": data}
 
 
-@app.post("/process-yaml/")
-async def process_yaml_data(file: UploadFile = File(...)):
+@app.post("/generate-r2rml/")
+async def generate_yaml_r2rml(yarrrml_file: UploadFile = File(...)):
     """
     Upload yaml file to execute r2rml extraction
-    :param file:
+    :param yarrrml_file:
+
     :return:
     """
-    if not file.filename.endswith('.yaml') and not file.filename.endswith('.yml'):
-        raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml or .yml files are accepted.")
+    initialization_folders()
+    yaml_path = f"{PATH_MAPPING}mapping.yaml"
+    save_yaml_in_dir(yaml_path, yarrrml_file)
+    try:
+        subprocess.run(
+            ['yarrrml-parser', '-i', yaml_path, '-o', f"{PATH_R2RLM}file.ttl"],
+            check=True
+        )
+        print(f"Successfully converted {yaml_path} to {PATH_R2RLM}file.ttl")
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred: {e}")
 
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    file_path = f"{PATH_MAPPING}{timestamp}.yaml"
-    os.makedirs(os.path.dirname(PATH_MAPPING), exist_ok=True)
-
-    with open(file_path, 'wb') as out_file:
-        content = file.file.read()
-
-        out_file.write(content)
-
-    return {"filename": file.filename, "location": file_path}
-
-
-@app.post("/upload-file/")
-async def upload_file(file_input: UploadFile = File(...)):
-    """
+    return FileResponse(f"{PATH_R2RLM}file.ttl", filename="file.ttl", media_type='text/turtle')
 
 
-    :param file_input: csv file with the data to be converted
-    :return:
-    """
-    logging.info(f"Working on {file_input.filename}")
-    if file_input.filename.endswith('.csv'):
-        logging.info(f"Data saved in folder {file_input.filename}")
-        # Read the content of the file
-        content = await file_input.read()
-        # Use StringIO to convert bytes to a file-like string object for pandas
-        content_str = StringIO(content.decode("utf-8"))
-        df = pd.read_csv(content_str, sep=";")
-
-        os.makedirs(os.path.dirname(PATH_DATA), exist_ok=True)
-        os.makedirs(os.path.dirname(PATH_TRANSFER), exist_ok=True)
-
-        file_path = f"{PATH_DATA}{file_input.filename}"
-        logging.info(f"Data saved in folder {file_path}")
-        df.to_csv(file_path)
-        return {"Saved": True,}
-    else:
-        raise HTTPException(status_code=400, detail="Invalid file type. Only .csv is accepted.")
-
-
-@app.post("/conversion/")
-async def generate_rdf(string_input: str = Form(...)):
-    """
-
-    :param string_input: name of the yaml file to be used for the r2rml generation.
-    :return:
-    """
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    config = f"""
-                                    [CONFIGURATION]
-                                    udfs: {PATH_PROCESSING_F}
-                                    [GTFS_CSV]
-                                    mappings:{PATH_MAPPING}{string_input}
-                                 """
-
-    kg = kglab.KnowledgeGraph(
-    )
-    kg.materialize(config)
-    save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
-    kg.save_rdf(save_loc)
-    logging.info(f"Saved in temp location {save_loc}")
-    # return FileResponse(save_loc, filename="output.ttl", media_type='text/turtle')
-    return {"item_name": f"{timestamp}output.ttl", "name": "Item name"}
 
 
 @app.post("/load_gdb/")
@@ -110,6 +58,36 @@ async def generate_rdf(graph_address: str = Form(...), repo_name: str = Form(...
     """
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     status = upload_graph_db(graph_address, repo_name,
-                    PATH_TRANSFER + file_name,
-                    "application/x-turtle")
+                             PATH_TRANSFER + file_name,
+                             "application/x-turtle")
     return {"Complete": status}
+
+
+@app.post("/rdf_tabular/")
+async def generate_rdf_tabular(yaml_config: UploadFile = File(...), data_tabular: UploadFile = File(...)):
+    """
+    Upload yaml file to execute r2rml extraction
+    :param data_tabular:
+    :param yaml_config:
+    :return:
+    """
+    initialization_folders()
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    if not yaml_config.filename.endswith('.yaml') and not yaml_config.filename.endswith('.yml'):
+        raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml or .yml files are accepted.")
+
+    yaml_path = f"{PATH_MAPPING}mapping.yaml"
+    save_yaml_in_dir(yaml_path, yaml_config)
+
+    if data_tabular.filename.endswith('.csv'):
+        await save_tabular_in_folder(data_tabular)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only .csv is accepted.")
+
+    logging.info(f"Config defined with {PATH_PROCESSING_F} nad {yaml_path}")
+    config = generate_config(yaml_path=yaml_path)
+    save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
+    generate_graph(config, save_loc)
+
+    return FileResponse(save_loc, filename="output.ttl", media_type='text/turtle')
