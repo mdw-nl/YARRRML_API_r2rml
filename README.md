@@ -61,9 +61,12 @@ This FastAPI application allows for easy processing of YAML and CSV files to gen
 
 ## API Endpoints
 
-### POST `/process-yaml/`
+### POST `/generate-r2rml/`
+### POST `/load_gdb/`
+### POST `/rdf_tabular/`
 
-Upload a YAML file for R2RML extraction.
+
+.
 
 - **Expected Data**: 
   - `file`: A YAML file (extension .yaml or .yml).
