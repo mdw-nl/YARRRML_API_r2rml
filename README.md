@@ -8,9 +8,9 @@ This FastAPI application allows for easy processing of YAML and CSV files to gen
 
 ## Features
 
-- **Process YAML**: Upload YAML files for R2RML extraction.
-- **Upload CSV**: Process and convert CSV files.
-- **Generate RDF**: Create RDF files from YAML configurations.
+- **generate-r2rml**: PErform YARRRML giving the yaml return r2rml file
+- **load_gdb**: load a specified ttl file to graph db 
+- **rdf_tabular** giving a yaml and the data return the generated graph in ttl 
 
 ## Requirements
 
