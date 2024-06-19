@@ -13,8 +13,16 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update \
  && apt-get install -y --no-install-recommends gcc g++ libyaml-dev \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+ && apt-get install -y --no-install-recommends curl gnupg
+
+# Install Node.js LTS and npm
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+ && apt-get install -y nodejs
+
+RUN node -v
+RUN npm -v
+
+RUN npm i -g @rmlio/yarrrml-parser
 
 # Copy the local requirements file to the container
 COPY requirements.txt /app/
