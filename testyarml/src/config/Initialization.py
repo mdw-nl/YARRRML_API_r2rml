@@ -1,9 +1,10 @@
 import os
-from .constant import *
+from constant import *
 import logging
 import pandas as pd
 from io import StringIO
 import kglab
+import csv
 
 
 def initialization_folders() -> None:
@@ -17,7 +18,7 @@ def initialization_folders() -> None:
     os.makedirs(os.path.dirname(PATH_R2RLM), exist_ok=True)
 
 
-def save_yaml_in_dir(yaml_path, yaml_config):
+async def save_yaml_in_dir(yaml_path, yaml_config):
     """
 
     :param yaml_path:
@@ -30,6 +31,18 @@ def save_yaml_in_dir(yaml_path, yaml_config):
         logging.info(f"Yaml saved in folder {yaml_path}")
 
 
+def remove_file(path_to_file) -> None:
+    """
+
+    :param path_to_file:
+    :return:
+    """
+    if os.path.exists(path_to_file):
+        os.remove(path_to_file)
+    else:
+        raise FileNotFoundError
+
+
 async def save_tabular_in_folder(data_tabular):
     """
     Save the tabular date in the appropriate folder
@@ -39,13 +52,26 @@ async def save_tabular_in_folder(data_tabular):
     logging.info(f"Data saved in folder {data_tabular.filename}")
     content = await data_tabular.read()
     content_str = StringIO(content.decode("utf-8"))
-    df = pd.read_csv(content_str, sep=";")
+    sample = content.decode("utf-8")[:1024]
+    sniffer = csv.Sniffer()
+
+    try:
+        # Detect the delimiter
+        dialect = sniffer.sniff(sample)
+        delimiter = dialect.delimiter
+    except csv.Error as e:
+        logging.error(f"Could not detect delimiter: {e}")
+        delimiter = ','  # Default to comma if detection fails
+
+    # Read the CSV file with the detected delimiter
+    df = pd.read_csv(content_str, sep=delimiter)
+
     file_path = f"{PATH_DATA}{data_tabular.filename}"
     logging.info(f"Data saved in folder {file_path}")
     df.to_csv(file_path)
 
 
-def generate_graph(config, save_loc):
+async def generate_graph(config, save_loc):
     """
 
     :param save_loc:

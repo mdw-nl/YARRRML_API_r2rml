@@ -2,8 +2,8 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import FileResponse
 import subprocess
 from src.config.constant import *
-from src.config.Initialization import initialization_folders, save_yaml_in_dir, save_tabular_in_folder,\
-    generate_graph,generate_config
+from src.config.Initialization import initialization_folders, save_yaml_in_dir, save_tabular_in_folder, \
+    generate_graph, generate_config
 from datetime import datetime
 
 import logging
@@ -25,6 +25,7 @@ async def receive_flexible_json(data: FlexibleData):
 async def generate_yaml_r2rml(yarrrml_file: UploadFile = File(...)):
     """
     Upload yaml file to execute r2rml extraction
+    The function will generate the r2rml mapping file only from the yaml
     :param yarrrml_file:
 
     :return:
@@ -32,6 +33,7 @@ async def generate_yaml_r2rml(yarrrml_file: UploadFile = File(...)):
     initialization_folders()
     yaml_path = f"{PATH_MAPPING}mapping.yaml"
     save_yaml_in_dir(yaml_path, yarrrml_file)
+    logging.info(f"Mapping successfully saved in {yaml_path}")
     try:
         subprocess.run(
             ['yarrrml-parser', '-i', yaml_path, '-o', f"{PATH_R2RLM}file.ttl"],
@@ -44,8 +46,6 @@ async def generate_yaml_r2rml(yarrrml_file: UploadFile = File(...)):
     return FileResponse(f"{PATH_R2RLM}file.ttl", filename="file.ttl", media_type='text/turtle')
 
 
-
-
 @app.post("/load_gdb/")
 async def generate_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
                        file_name: str = Form(...)):
@@ -56,10 +56,10 @@ async def generate_rdf(graph_address: str = Form(...), repo_name: str = Form(...
     :param graph_address: address to the GraphDb instance
     :return:
     """
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     status = upload_graph_db(graph_address, repo_name,
                              PATH_TRANSFER + file_name,
                              "application/x-turtle")
+    logging.info(f"Data successfully uploaded to GB repo{repo_name}")
     return {"Complete": status}
 
 
@@ -78,7 +78,8 @@ async def generate_rdf_tabular(yaml_config: UploadFile = File(...), data_tabular
         raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml or .yml files are accepted.")
 
     yaml_path = f"{PATH_MAPPING}mapping.yaml"
-    save_yaml_in_dir(yaml_path, yaml_config)
+    await save_yaml_in_dir(yaml_path, yaml_config)
+    logging.info(f"Mapping successfully saved in {yaml_path}")
 
     if data_tabular.filename.endswith('.csv'):
         await save_tabular_in_folder(data_tabular)
@@ -89,5 +90,6 @@ async def generate_rdf_tabular(yaml_config: UploadFile = File(...), data_tabular
     config = generate_config(yaml_path=yaml_path)
     save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
     generate_graph(config, save_loc)
-
-    return FileResponse(save_loc, filename="output.ttl", media_type='text/turtle')
+    logging.info(f"Config defined with {PATH_PROCESSING_F} nad {yaml_path}")
+    return {"Filename": f"{timestamp}output.ttl"}, FileResponse(save_loc, filename="output.ttl",
+                                                                media_type='text/turtle')

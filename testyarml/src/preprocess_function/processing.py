@@ -11,7 +11,9 @@ def LowerCase(code):
     :param code:
     :return:
     """
-    return code.lower()
+    if code:
+        return code.lower()
+    return None
 
 
 @udf(
@@ -24,12 +26,15 @@ def FloatToBool(code):
     :param code:
     :return:
     """
-    if code == "1.0" or code == "1" or code == 1 or code == 1.0:
-        return "True"
-    elif code == "0.0" or code == "0" or code == 0 or code == 0.0:
-        return "False"
+    if code:
+        if code == "1.0" or code == "1" or code == 1 or code == 1.0:
+            return "True"
+        elif code == "0.0" or code == "0" or code == 0 or code == 0.0:
+            return "False"
+        else:
+            return code
     else:
-        return code
+        return None
 
 @udf(
     fun_id='http://www.example.com/YNtoBool',
@@ -41,9 +46,12 @@ def YNtoBool(code):
     :param code:
     :return:
     """
-    if code == "YES" or code == "yes" or code == "Yes":
-        return "True"
-    elif code == "NO" or code == "no" or code == "No":
-        return "False"
+    if code:
+        if code == "YES" or code == "yes" or code == "Yes":
+            return "True"
+        elif code == "NO" or code == "no" or code == "No":
+            return "False"
+        else:
+            return None
     else:
         return None
