@@ -2,15 +2,15 @@
 
 This FastAPI application allows for easy processing of YAML and CSV files to generate and manipulate RDF (Resource Description Framework) files. It supports:
 
-- Uploading YAML files for R2RML extraction.
-- Converting CSV data into structured formats.
-- Dynamically generating RDF files based on specified configurations.
+- Generate r2rml script from yaml 
+- Converting data from CSV or DB into RDF formats.Dynamically generating RDF files based on specified configurations
+- Upload to the GraphDB repo
 
 ## Features
 
-- **generate-r2rml**: PErform YARRRML giving the yaml return r2rml file
+- **generate-r2rml**: Return the r2rml script from the yaml file and the data
 - **load_gdb**: load a specified ttl file to graph db 
-- **rdf_tabular** giving a yaml and the data return the generated graph in ttl 
+- **rdf_generation** Take as input yaml/ttl file, data or DB string to convert in RDF
 
 ## Requirements
 
@@ -63,7 +63,7 @@ This FastAPI application allows for easy processing of YAML and CSV files to gen
 
 ### POST `/generate-r2rml/`
 ### POST `/load_gdb/`
-### POST `/rdf_tabular/`
+### POST `/rdf_generation/`
 
 
 .

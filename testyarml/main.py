@@ -41,7 +41,7 @@ async def generate_r2rml_mapping(yarrrml_file: UploadFile = File(...)):
     return FileResponse(f"{PATH_R2RLM}file.ttl", filename="file.ttl", media_type='text/turtle')
 
 
-@app.post("/load_gdb/")
+@app.post("/generate-r2rml/")
 async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
                        file_name: str = Form(...)):
     """
