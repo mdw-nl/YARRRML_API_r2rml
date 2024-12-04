@@ -13,7 +13,8 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update \
  && apt-get install -y --no-install-recommends gcc g++ libyaml-dev \
- && apt-get install -y --no-install-recommends curl gnupg
+ && apt-get install -y --no-install-recommends curl gnupg \
+ && apt-get install -y libpq-dev
 
 # Install Node.js LTS and npm
 RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \

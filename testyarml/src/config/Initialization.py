@@ -1,13 +1,14 @@
 import os
-from constant import *
+from .constant import *
 import logging
 import pandas as pd
 from io import StringIO
 import kglab
 import csv
+from fastapi import HTTPException
 
 
-def initialization_folders() -> None:
+async def initialization_folders() -> None:
     """
     Create the required directory
     :return:
@@ -16,6 +17,38 @@ def initialization_folders() -> None:
     os.makedirs(os.path.dirname(PATH_TRANSFER), exist_ok=True)
     os.makedirs(os.path.dirname(PATH_MAPPING), exist_ok=True)
     os.makedirs(os.path.dirname(PATH_R2RLM), exist_ok=True)
+
+
+def check_format_config_yaml(yaml_config):
+    """
+    Check that the file format is compatible
+    :param yaml_config:
+    :return:
+    """
+    if (not yaml_config.filename.endswith('.yaml') and not yaml_config.filename.endswith('.yml')) and \
+            (not yaml_config.filename.endswith('.ttl') and not yaml_config.filename.endswith('.ttl')):
+        raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml or .ttl files are accepted.")
+
+
+async def data_check_format_init(data):
+    if data.filename.endswith('.csv'):
+        await save_tabular_in_folder(data)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only .csv is accepted.")
+
+
+def check_format_save_file(file):
+    """
+    Select the format for the mapping file based on the input
+    :param file:
+    :return:
+    """
+    if file.filename.endswith('.yaml'):
+        return f"{PATH_MAPPING}mapping.yaml"
+    elif file.filename.endswith('.ttl'):
+        return f"{PATH_MAPPING}mapping.ttl"
+    else:
+        raise Exception("File type not supported")
 
 
 async def save_yaml_in_dir(yaml_path, yaml_config):
@@ -79,8 +112,7 @@ async def generate_graph(config, save_loc):
     :return:
     """
 
-    kg = kglab.KnowledgeGraph(
-    )
+    kg = kglab.KnowledgeGraph()
     kg.materialize(config)
 
     kg.save_rdf(save_loc)
@@ -93,11 +125,22 @@ def generate_config(**variables):
     :return:
     """
     yaml_path = variables.get('yaml_path', 'default_path')
-
-    config = f"""
-                                        [CONFIGURATION]
-                                        udfs: {PATH_PROCESSING_F}
-                                        [GTFS_CSV]
-                                        mappings:{yaml_path}
-                                     """
+    db = variables.get('db', None)
+    if db:
+        logging.info("Entering config db")
+        db_str = variables.get('db_str', None)
+        config = f"""
+                                                [CONFIGURATION]
+                                                udfs: {PATH_PROCESSING_F}
+                                                [GTFS_CSV]
+                                                db_url: {db_str}
+                                                mappings:{yaml_path}
+                                             """
+    else:
+        config = f"""
+                                            [CONFIGURATION]
+                                            udfs: {PATH_PROCESSING_F}
+                                            [GTFS_CSV]
+                                            mappings:{yaml_path}
+                                         """
     return config

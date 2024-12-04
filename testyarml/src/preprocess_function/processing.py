@@ -55,3 +55,23 @@ def YNtoBool(code):
             return None
     else:
         return None
+
+@udf(
+    fun_id='http://www.example.com/YNtoBoolNoNull',
+    code='http://users.ugent.be/~bjdmeest/function/grel.ttl#valueParam')
+def YNtoBoolNoNull(code):
+    """
+
+    :return:
+    :param code:
+    :return:
+    """
+    if code:
+        if code == "YES" or code == "yes" or code == "Yes":
+            return "True"
+        elif code == "NO" or code == "no" or code == "No":
+            return "False"
+        else:
+            return "False"
+    else:
+        return "False"

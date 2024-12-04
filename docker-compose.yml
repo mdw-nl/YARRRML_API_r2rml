@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   graph-db:
+    network_mode: "host"
     image: ontotext/graphdb:10.6.4
     #ghcr.io/maastrichtu-cds/fair_tools_docker-graphdb/docker-graphdb:latest
     container_name: graphdb
@@ -10,6 +11,7 @@ services:
     restart: unless-stopped
 
   fastapi-app:
+    network_mode: "host"
     build:
       context: .
       dockerfile: Dockerfile
