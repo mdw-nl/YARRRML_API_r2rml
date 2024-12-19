@@ -43,7 +43,7 @@ async def generate_r2rml_mapping(yarrrml_file: UploadFile = File(...)):
 
 @app.post("/load_gdb/")
 async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
-                       file_name: str = Form(...)):
+                     file_name: str = Form(...)):
     """
     Function upload specified ttl file to the GraphDB repo
 
@@ -60,46 +60,44 @@ async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
 
 
 @app.post("/rdf_generation/")
-async def generate_rdf_(yaml_config: Optional[UploadFile] = File(...),
-                               data_tabular: UploadFile = File(...),
-                               DB: bool = Form(False),
-                               db_str: Optional[str] = Form(None)
-                               ):
+async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
+                        data_tabular: Optional[UploadFile] = File(...),
+                        DB: bool = Form(False),
+                        db_str: Optional[str] = Form(None)
+                        ):
     """
     Upload yaml file to execute r2rml extraction
+    :param file_config:
     :param DB:
     :param db_str:
     :param data_tabular:
-    :param yaml_config:
     :return:
     """
     await initialization_folders()
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    check_format_config_yaml(yaml_config)
-    yaml_path = check_format_save_file(yaml_config)
+    check_format_config_yaml(file_config)
+    file_conf_path, type_file = check_format_save_file(file_config)
     logging.info(f"DB is {DB} and string is {db_str}")
-    await save_yaml_in_dir(yaml_path, yaml_config)
-    logging.info(f"Mapping successfully saved in {yaml_path}")
+    await save_yaml_in_dir(file_conf_path, file_config)
+    logging.info(f"Mapping successfully saved in {file_conf_path}")
 
     if DB is True:
         logging.info("DB specified setting up process")
-        config = generate_config(db=DB, db_str=db_str, yaml_path=yaml_path)
+        config = generate_config(db=DB, db_str=db_str, yaml_path=file_conf_path)
         logging.info(f"Config generated...{config}")
     else:
 
         logging.info("No db in use ..trying using file ")
         await data_check_format_init(data_tabular)
-        logging.info(f"Config defined with {PATH_PROCESSING_F} nad {yaml_path}")
+        logging.info(f"Config defined with {PATH_PROCESSING_F} nad {file_conf_path}")
 
-        config = generate_config(yaml_path=yaml_path)
+        config = generate_config(yaml_path=file_conf_path)
         logging.info(f"Config generated...{config}")
 
     save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
     await generate_graph(config, save_loc)
-    logging.info(f"Config defined with {PATH_PROCESSING_F} nad {yaml_path}")
+    logging.info(f"Config defined with {PATH_PROCESSING_F} nad {file_conf_path}")
 
     return {"Filename": f"{timestamp}output.ttl"}, FileResponse(save_loc, filename="output.ttl",
                                                                 media_type='text/turtle')
-
-

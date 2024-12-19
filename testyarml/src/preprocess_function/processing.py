@@ -47,9 +47,9 @@ def YNtoBool(code):
     :return:
     """
     if code:
-        if code == "YES" or code == "yes" or code == "Yes":
+        if code == "YES" or code == "yes" or code == "Yes" or code == "Ja" or code == "JA" or code == "ja":
             return "True"
-        elif code == "NO" or code == "no" or code == "No":
+        elif code == "NO" or code == "no" or code == "No" or code == "Nee" or code == "NEE" or code == "nee":
             return "False"
         else:
             return None

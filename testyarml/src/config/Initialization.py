@@ -25,6 +25,7 @@ def check_format_config_yaml(yaml_config):
     :param yaml_config:
     :return:
     """
+    logging.info(f"Filename is {yaml_config.filename}")
     if (not yaml_config.filename.endswith('.yaml') and not yaml_config.filename.endswith('.yml')) and \
             (not yaml_config.filename.endswith('.ttl') and not yaml_config.filename.endswith('.ttl')):
         raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml or .ttl files are accepted.")
@@ -43,10 +44,11 @@ def check_format_save_file(file):
     :param file:
     :return:
     """
+    logging.info(f"File is {file}")
     if file.filename.endswith('.yaml'):
-        return f"{PATH_MAPPING}mapping.yaml"
+        return f"{PATH_MAPPING}mapping.yaml","yml"
     elif file.filename.endswith('.ttl'):
-        return f"{PATH_MAPPING}mapping.ttl"
+        return f"{PATH_MAPPING}mapping.ttl","ttl"
     else:
         raise Exception("File type not supported")
 
@@ -124,6 +126,7 @@ def generate_config(**variables):
 
     :return:
     """
+
     yaml_path = variables.get('yaml_path', 'default_path')
     db = variables.get('db', None)
     if db:
@@ -139,6 +142,7 @@ def generate_config(**variables):
     else:
         config = f"""
                                             [CONFIGURATION]
+                                            na_values= #N/A,N/A,#N/A N/A,n/a,NA,<NA>,#NA,NULL,null,NaN,nan,None
                                             udfs: {PATH_PROCESSING_F}
                                             [GTFS_CSV]
                                             mappings:{yaml_path}
