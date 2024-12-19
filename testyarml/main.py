@@ -7,7 +7,6 @@ from src.config.Initialization import initialization_folders, save_yaml_in_dir, 
 from datetime import datetime
 from typing import Optional
 import logging
-from src.work.json_process import FlexibleData
 from fastapi import FastAPI
 from src.work.utils import upload_graph_db
 
