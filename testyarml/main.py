@@ -15,14 +15,17 @@ app = FastAPI()
 logging.basicConfig(filename='example.log', level=logging.INFO, format='%(asctime)s:%(levelname)s:%(message)s')
 
 
-@app.post("/generate-r2rml/")
+#@app.post("/generate-r2rml/")
+@app.post("/generate-r2rml/", tags=["R2RML Mapping"], summary="Generate R2RML Mapping")
 async def generate_r2rml_mapping(yarrrml_file: UploadFile = File(...)):
     """
-    Upload yaml file to execute r2rml extraction
-    The function will generate the r2rml mapping file only from the yaml
-    :param yarrrml_file:
+    Upload a YARRRML file to generate an R2RML mapping file.
 
-    :return:
+    - **yarrrml_file**: The YARRRML file to be uploaded.
+    - Generates the R2RML mapping file from the provided YARRRML file.
+
+    Returns:
+    - A `.ttl` file containing the generated R2RML mapping.
     """
     await initialization_folders()
     yaml_path = f"{PATH_MAPPING}mapping.yaml"
@@ -40,16 +43,19 @@ async def generate_r2rml_mapping(yarrrml_file: UploadFile = File(...)):
     return FileResponse(f"{PATH_R2RLM}file.ttl", filename="file.ttl", media_type='text/turtle')
 
 
-@app.post("/load_gdb/")
+#@app.post("/load_gdb/")
+@app.post("/load_gdb/", tags=["GraphDB Operations"], summary="Upload RDF to GraphDB")
 async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
                      file_name: str = Form(...)):
     """
-    Function upload specified ttl file to the GraphDB repo
+    Upload an RDF file to a specified GraphDB repository.
 
-    :param repo_name: name repository in GraphDB
-    :param file_name: name of the file with the rdf graph
-    :param graph_address: address to the GraphDb instance
-    :return:
+    - **graph_address**: The address of the GraphDB instance.
+    - **repo_name**: The name of the GraphDB repository.
+    - **file_name**: The name of the RDF file to be uploaded.
+
+    Returns:
+    - A confirmation message indicating the status of the upload.
     """
     status = upload_graph_db(graph_address, repo_name,
                              PATH_TRANSFER + file_name,
@@ -58,19 +64,23 @@ async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
     return {"Complete": status}
 
 
-@app.post("/rdf_generation/")
+#@app.post("/rdf_generation/")
+@app.post("/rdf_generation/", tags=["RDF Generation"], summary="Generate RDF from Config and Data")
 async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
                         data_tabular: Optional[UploadFile] = File(...),
                         DB: bool = Form(False),
                         db_str: Optional[str] = Form(None)
                         ):
     """
-    Upload yaml file to execute r2rml extraction
-    :param file_config:
-    :param DB:
-    :param db_str:
-    :param data_tabular:
-    :return:
+    Generate an RDF file from a provided configuration and optionally tabular data.
+
+    - **file_config**: Configuration file in YAML format for generating the RDF.
+    - **data_tabular**: Optional tabular data file.
+    - **DB**: Boolean flag indicating if a database connection string is provided.
+    - **db_str**: Database connection string (optional if `DB` is False).
+
+    Returns:
+    - A `.ttl` file containing the generated RDF.
     """
     await initialization_folders()
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
