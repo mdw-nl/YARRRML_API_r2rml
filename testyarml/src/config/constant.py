@@ -1,0 +1,5 @@
+PATH_PROCESSING_F = "./src/preprocess_function/processing.py"
+PATH_MAPPING = "/app/mapping/"
+PATH_DATA = "/app/data/"
+PATH_TRANSFER = "/app/output/"
+PATH_R2RLM = "/app/r2rml/"
