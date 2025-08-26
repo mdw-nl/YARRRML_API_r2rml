@@ -112,6 +112,7 @@ async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
     save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
     await generate_graph(config, save_loc)
     logging.info(f"Config defined with {PATH_PROCESSING_F} nad {file_conf_path}")
+    logging.info(f"Filename: {timestamp}output.ttl")
 
-    return {"Filename": f"{timestamp}output.ttl"}, FileResponse(save_loc, filename="output.ttl",
-                                                                media_type='text/turtle')
+    return FileResponse(save_loc, filename="output.ttl",
+                        media_type='text/turtle')
