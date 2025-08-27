@@ -68,7 +68,7 @@ async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
 
 @app.post("/rdf_generation/", tags=["RDF Generation"], summary="Generate RDF from Config and Data")
 async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
-                        data_tabular: Optional[UploadFile] = File(...),
+                        data_tabular: Optional[UploadFile] = File(None),
                         DB: bool = Form(False),
                         db_str: Optional[str] = Form(None)
                         ):
