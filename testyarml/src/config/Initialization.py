@@ -27,8 +27,8 @@ def check_format_config_yaml(yaml_config):
     """
     logging.info(f"Filename is {yaml_config.filename}")
     if (not yaml_config.filename.endswith('.yaml') and not yaml_config.filename.endswith('.yml')) and \
-            (not yaml_config.filename.endswith('.ttl') and not yaml_config.filename.endswith('.ttl')):
-        raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml or .ttl files are accepted.")
+            (not yaml_config.filename.endswith('.ttl')):
+        raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml, .yml, or .ttl files are accepted.")
 
 
 async def data_check_format_init(data):
@@ -45,12 +45,11 @@ def check_format_save_file(file):
     :return:
     """
     logging.info(f"File is {file}")
-    if file.filename.endswith('.yaml'):
-        return f"{PATH_MAPPING}mapping.yaml","yml"
-    elif file.filename.endswith('.ttl'):
-        return f"{PATH_MAPPING}mapping.ttl","ttl"
-    else:
-        raise Exception("File type not supported")
+    if file.filename.endswith('.yaml') or file.filename.endswith('.yml'):
+        return f"{PATH_MAPPING}mapping.yaml", "yml"
+    if file.filename.endswith('.ttl'):
+        return f"{PATH_MAPPING}mapping.ttl", "ttl"
+    raise HTTPException(status_code=400, detail="Invalid file type. Only .yaml, .yml, or .ttl files are accepted.")
 
 
 async def save_yaml_in_dir(yaml_path, yaml_config):
@@ -101,7 +100,8 @@ async def save_tabular_in_folder(data_tabular):
     # Read the CSV file with the detected delimiter
     df = pd.read_csv(content_str, sep=delimiter)
 
-    file_path = f"{PATH_DATA}{data_tabular.filename}"
+    safe_filename = os.path.basename(data_tabular.filename)
+    file_path = f"{PATH_DATA}{safe_filename}"
     logging.info(f"Data saved in folder {file_path}")
     df.to_csv(file_path)
 

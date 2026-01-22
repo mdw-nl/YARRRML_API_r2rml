@@ -7,7 +7,7 @@ from src.config.Initialization import initialization_folders, save_yaml_in_dir, 
 from datetime import datetime
 from typing import Optional
 import logging
-from fastapi import FastAPI
+import os
 from src.work.utils import upload_graph_db
 
 app = FastAPI()
@@ -34,13 +34,17 @@ async def generate_r2rml_mapping(yarrrml_file: UploadFile = File(...)):
 
         subprocess.run(
             ['yarrrml-parser', '-i', yaml_path, '-o', f"{PATH_R2RLM}file.ttl"],
-            check=True
+            check=True,
+            timeout=60
         )
         print(f"Successfully converted {yaml_path} to {PATH_R2RLM}file.ttl")
         return FileResponse(f"{PATH_R2RLM}file.ttl", filename="file.ttl", media_type='text/turtle')
     except subprocess.CalledProcessError as e:
         logging.error(f"Error during YARRRML parsing: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate R2RML mapping.")
+    except subprocess.TimeoutExpired as e:
+        logging.error(f"Timeout during YARRRML parsing: {e}")
+        raise HTTPException(status_code=504, detail="YARRRML parsing timed out.")
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error.")
@@ -59,9 +63,12 @@ async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
     Returns:
     - A confirmation message indicating the status of the upload.
     """
+    safe_filename = os.path.basename(file_name)
     status = upload_graph_db(graph_address, repo_name,
-                             PATH_TRANSFER + file_name,
+                             PATH_TRANSFER + safe_filename,
                              "application/x-turtle")
+    if not status:
+        raise HTTPException(status_code=502, detail="Failed to upload data to GraphDB.")
     logging.info(f"Data successfully uploaded to GB repo{repo_name}")
     return {"Complete": status}
 
@@ -88,7 +95,7 @@ async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
 
     check_format_config_yaml(file_config)
     file_conf_path, type_file = check_format_save_file(file_config)
-    logging.info(f"DB is {DB} and string is {db_str}")
+    logging.info(f"DB is {DB}")
     await save_yaml_in_dir(file_conf_path, file_config)
     logging.info(f"Mapping successfully saved in {file_conf_path}")
     if not DB and not data_tabular:

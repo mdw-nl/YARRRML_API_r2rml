@@ -62,16 +62,45 @@ This FastAPI application allows for easy processing of YAML and CSV files to gen
 ## API Endpoints
 
 ### POST `/generate-r2rml/`
-### POST `/load_gdb/`
-### POST `/rdf_generation/`
+- **Expected Data**:
+  - `yarrrml_file`: A YARRRML file (extension .yaml or .yml).
 
-
-.
-
-- **Expected Data**: 
-  - `file`: A YAML file (extension .yaml or .yml).
-  
 #### Example using `curl`:
 
 ```bash
-curl -X 'POST' 'http://localhost:8000/process-yaml/' -H 'Content-Type: multipart/form-data' -F 'file=@path_to_your_yaml_file.yaml'
+curl -X 'POST' 'http://localhost:8000/generate-r2rml/' \\
+  -H 'Content-Type: multipart/form-data' \\
+  -F 'yarrrml_file=@path_to_your_yaml_file.yaml'
+```
+
+### POST `/load_gdb/`
+- **Expected Data**:
+  - `graph_address`: GraphDB base URL (e.g., http://localhost:7200).
+  - `repo_name`: GraphDB repository name.
+  - `file_name`: File name located in the transfer directory.
+
+#### Example using `curl`:
+
+```bash
+curl -X 'POST' 'http://localhost:8000/load_gdb/' \\
+  -F 'graph_address=http://localhost:7200' \\
+  -F 'repo_name=my_repo' \\
+  -F 'file_name=output.ttl'
+```
+
+### POST `/rdf_generation/`
+- **Expected Data**:
+  - `file_config`: Mapping configuration file (.yaml/.yml or .ttl).
+  - `data_tabular`: CSV file (required when `DB=false`).
+  - `DB`: Boolean flag to use DB mode.
+  - `db_str`: Database connection string (required when `DB=true`).
+
+#### Example using `curl`:
+
+```bash
+curl -X 'POST' 'http://localhost:8000/rdf_generation/' \\
+  -H 'Content-Type: multipart/form-data' \\
+  -F 'file_config=@path_to_config.yaml' \\
+  -F 'data_tabular=@path_to_data.csv' \\
+  -F 'DB=false'
+```
