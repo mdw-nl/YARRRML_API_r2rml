@@ -1,7 +1,7 @@
 import requests
 
 
-def upload_graph_db(graphdb_url, repository_id, data_file, contenttype):
+def upload_graph_db(graphdb_url, repository_id, data_file, contenttype, timeout=30):
     """
 
     @param graphdb_url:
@@ -26,7 +26,11 @@ def upload_graph_db(graphdb_url, repository_id, data_file, contenttype):
 
     # Send a POST request to upload the data to GraphDB
 
-    response = requests.post(upload_url, data=data, headers=headers)
+    try:
+        response = requests.post(upload_url, data=data, headers=headers, timeout=timeout)
+    except requests.RequestException as exc:
+        print(f"Error connecting to GraphDB: {exc}")
+        return False
 
     # Check the response
     if response.status_code in (200, 204):
