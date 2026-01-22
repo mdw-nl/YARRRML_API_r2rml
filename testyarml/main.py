@@ -5,6 +5,7 @@ from src.config.constant import *
 from src.config.Initialization import initialization_folders, save_yaml_in_dir, save_tabular_in_folder, \
     generate_graph, generate_config, check_format_save_file, check_format_config_yaml, data_check_format_init
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 import logging
 import os
@@ -64,8 +65,14 @@ async def upload_rdf(graph_address: str = Form(...), repo_name: str = Form(...),
     - A confirmation message indicating the status of the upload.
     """
     safe_filename = os.path.basename(file_name)
+    if safe_filename != file_name:
+        raise HTTPException(status_code=400, detail="Invalid file name.")
+    transfer_root = Path(PATH_TRANSFER).resolve()
+    file_path = (transfer_root / safe_filename).resolve()
+    if file_path.parent != transfer_root:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
     status = upload_graph_db(graph_address, repo_name,
-                             PATH_TRANSFER + safe_filename,
+                             str(file_path),
                              "application/x-turtle")
     if not status:
         raise HTTPException(status_code=502, detail="Failed to upload data to GraphDB.")
@@ -95,7 +102,7 @@ async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
 
     check_format_config_yaml(file_config)
     file_conf_path, type_file = check_format_save_file(file_config)
-    logging.info(f"DB is {DB}")
+    logging.info("DB is %s and db_str is %s", DB, "set" if db_str else "not set")
     await save_yaml_in_dir(file_conf_path, file_config)
     logging.info(f"Mapping successfully saved in {file_conf_path}")
     if not DB and not data_tabular:
@@ -106,7 +113,7 @@ async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
             raise HTTPException(status_code=400, detail="Database string is required when DB=True")
         logging.info("DB specified setting up process")
         config = generate_config(db=DB, db_str=db_str, yaml_path=file_conf_path)
-        logging.info(f"Config generated...{config}")
+        logging.info("Config generated for DB source")
     else:
 
         logging.info("No db in use ..trying using file ")
@@ -114,7 +121,7 @@ async def generate_rdf_(file_config: Optional[UploadFile] = File(...),
         logging.info(f"Config defined with {PATH_PROCESSING_F} nad {file_conf_path}")
 
         config = generate_config(yaml_path=file_conf_path)
-        logging.info(f"Config generated...{config}")
+        logging.info("Config generated for file source")
 
     save_loc = f"{PATH_TRANSFER}{timestamp}output.ttl"
     await generate_graph(config, save_loc)

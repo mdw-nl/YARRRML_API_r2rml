@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from .constant import *
 import logging
 import pandas as pd
@@ -101,7 +102,12 @@ async def save_tabular_in_folder(data_tabular):
     df = pd.read_csv(content_str, sep=delimiter)
 
     safe_filename = os.path.basename(data_tabular.filename)
-    file_path = f"{PATH_DATA}{safe_filename}"
+    if safe_filename != data_tabular.filename:
+        raise HTTPException(status_code=400, detail="Invalid file name.")
+    data_root = Path(PATH_DATA).resolve()
+    file_path = (data_root / safe_filename).resolve()
+    if file_path.parent != data_root:
+        raise HTTPException(status_code=400, detail="Invalid file path.")
     logging.info(f"Data saved in folder {file_path}")
     df.to_csv(file_path)
 
