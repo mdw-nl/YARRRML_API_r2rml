@@ -14,6 +14,7 @@ WORKDIR /app
 RUN apt-get update \
  && apt-get install -y --no-install-recommends gcc g++ libyaml-dev \
  && apt-get install -y --no-install-recommends curl gnupg \
+ && apt-get install -y --only-upgrade ca-certificates \
  && apt-get install -y libpq-dev
 
 # Install Node.js LTS and npm
@@ -30,6 +31,9 @@ COPY requirements.txt /app/
 
 # Install the Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Always pull the newest CA bundle (e.g. distrusted eMudhra/emSign roots)
+RUN pip install --no-cache-dir --upgrade certifi
 
 # Copy the local code to the container
 COPY testyarml/ /app/
